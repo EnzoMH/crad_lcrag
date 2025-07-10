@@ -1,0 +1,12 @@
+.env
+*.log
+*.xlsx
+*.csv
+*.json
+*.txt
+*.md
+!README.md
+!requirements.txt
+!**README.md
+!**requirements.txt
+!LICENSE
