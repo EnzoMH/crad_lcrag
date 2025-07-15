@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 에이전트 시스템 - 대시보드</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/font.css" />
+
+    <style>
+      body {
+        font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui,
+          sans-serif;
+      }
+
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+
+      .card-hover {
+        transition: all 0.3s ease;
+      }
+
+      .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+      }
+
+      .status-healthy {
+        background-color: #10b981;
+      }
+      .status-warning {
+        background-color: #f59e0b;
+      }
+      .status-error {
+        background-color: #ef4444;
+      }
+
+      .loading {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 dark:bg-gray-900">
+    <!-- Navigation -->
+    <nav class="gradient-bg shadow-lg">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center">
+            <i class="fas fa-robot text-white text-2xl mr-3"></i>
+            <h1 class="text-white text-xl font-bold">AI 에이전트 시스템</h1>
+          </div>
+
+          <div class="flex items-center space-x-4">
+            <button
+              id="refresh-btn"
+              class="text-white hover:text-gray-200 transition-colors"
+            >
+              <i class="fas fa-sync-alt"></i>
+            </button>
+
+            <div class="relative">
+              <button
+                id="notifications-btn"
+                class="text-white hover:text-gray-200 transition-colors"
+              >
+                <i class="fas fa-bell"></i>
+                <span
+                  id="notification-badge"
+                  class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full px-1 hidden"
+                  >0</span
+                >
+              </button>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <span
+                id="system-status"
+                class="status-indicator status-healthy"
+              ></span>
+              <span class="text-white text-sm">시스템 상태</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Quick Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div
+          class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 card-hover"
+        >
+          <div class="flex items-center">
+            <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+              <i
+                class="fas fa-robot text-blue-600 dark:text-blue-400 text-xl"
+              ></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                총 에이전트
+              </p>
+              <p
+                id="total-agents"
+                class="text-2xl font-semibold text-gray-900 dark:text-white"
+              >
+                -
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 card-hover"
+        >
+          <div class="flex items-center">
+            <div class="p-3 bg-green-100 dark:bg-green-900 rounded-full">
+              <i
+                class="fas fa-tasks text-green-600 dark:text-green-400 text-xl"
+              ></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm text-gray-500 dark:text-gray-400">활성 작업</p>
+              <p
+                id="active-tasks"
+                class="text-2xl font-semibold text-gray-900 dark:text-white"
+              >
+                -
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 card-hover"
+        >
+          <div class="flex items-center">
+            <div class="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-full">
+              <i
+                class="fas fa-chart-line text-yellow-600 dark:text-yellow-400 text-xl"
+              ></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm text-gray-500 dark:text-gray-400">성공률</p>
+              <p
+                id="success-rate"
+                class="text-2xl font-semibold text-gray-900 dark:text-white"
+              >
+                -%
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 card-hover"
+        >
+          <div class="flex items-center">
+            <div class="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
+              <i
+                class="fas fa-clock text-purple-600 dark:text-purple-400 text-xl"
+              ></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                평균 응답 시간
+              </p>
+              <p
+                id="avg-response-time"
+                class="text-2xl font-semibold text-gray-900 dark:text-white"
+              >
+                -s
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Dashboard Content -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- System Performance Chart -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+              시스템 성능
+            </h3>
+            <select
+              id="performance-timeframe"
+              class="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1"
+            >
+              <option value="1h">최근 1시간</option>
+              <option value="6h">최근 6시간</option>
+              <option value="24h" selected>최근 24시간</option>
+            </select>
+          </div>
+          <div class="h-64">
+            <canvas id="performance-chart"></canvas>
+          </div>
+        </div>
+
+        <!-- Active Agents -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+              활성 에이전트
+            </h3>
+            <button
+              id="create-agent-btn"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+            >
+              <i class="fas fa-plus mr-1"></i> 에이전트 생성
+            </button>
+          </div>
+          <div id="agents-list" class="space-y-3 max-h-64 overflow-y-auto">
+            <!-- Agents will be populated here -->
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Recent Tasks -->
+        <div
+          class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6"
+        >
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+              최근 작업
+            </h3>
+            <button
+              id="view-all-tasks-btn"
+              class="text-blue-600 hover:text-blue-800 text-sm"
+            >
+              모든 작업 보기 <i class="fas fa-arrow-right ml-1"></i>
+            </button>
+          </div>
+          <div id="recent-tasks" class="space-y-3 max-h-80 overflow-y-auto">
+            <!-- Recent tasks will be populated here -->
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            빠른 작업
+          </h3>
+          <div class="space-y-3">
+            <button
+              id="start-crawling-btn"
+              class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition-colors"
+            >
+              <i class="fas fa-spider mr-2"></i>
+              크롤링 시작
+            </button>
+
+            <button
+              id="analyze-data-btn"
+              class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded transition-colors"
+            >
+              <i class="fas fa-chart-bar mr-2"></i>
+              데이터 분석
+            </button>
+
+            <button
+              id="optimize-system-btn"
+              class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded transition-colors"
+            >
+              <i class="fas fa-cogs mr-2"></i>
+              시스템 최적화
+            </button>
+
+            <button
+              id="view-monitoring-btn"
+              class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded transition-colors"
+            >
+              <i class="fas fa-monitor mr-2"></i>
+              모니터링 보기
+            </button>
+          </div>
+
+          <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
+              시스템 링크
+            </h4>
+            <div class="space-y-2">
+              <a
+                href="/docs"
+                class="block text-blue-600 hover:text-blue-800 text-sm"
+              >
+                <i class="fas fa-book mr-2"></i>API 문서
+              </a>
+              <a
+                href="/health"
+                class="block text-blue-600 hover:text-blue-800 text-sm"
+              >
+                <i class="fas fa-heartbeat mr-2"></i>시스템 상태
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Agent Creation Modal -->
+    <div
+      id="agent-modal"
+      class="fixed inset-0 bg-black bg-opacity-50 hidden z-50"
+    >
+      <div class="flex items-center justify-center min-h-screen p-4">
+        <div
+          class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full"
+        >
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                새 에이전트 생성
+              </h3>
+              <button
+                id="close-modal-btn"
+                class="text-gray-400 hover:text-gray-600"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+
+            <form id="agent-form" class="space-y-4">
+              <div>
+                <label
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >에이전트 이름</label
+                >
+                <input
+                  type="text"
+                  id="agent-name"
+                  class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >에이전트 타입</label
+                >
+                <select
+                  id="agent-type"
+                  class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
+                  required
+                >
+                  <option value="">타입 선택</option>
+                  <option value="search_strategy">검색 전략 에이전트</option>
+                  <option value="contact">연락처 에이전트</option>
+                  <option value="validation">검증 에이전트</option>
+                  <option value="optimizer">최적화 에이전트</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >설명</label
+                >
+                <textarea
+                  id="agent-description"
+                  class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
+                  rows="3"
+                ></textarea>
+              </div>
+
+              <div class="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  id="cancel-btn"
+                  class="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  생성
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div
+      id="notification-toast"
+      class="fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50"
+    >
+      <div class="flex items-center">
+        <i class="fas fa-check-circle mr-2"></i>
+        <span id="toast-message">알림 메시지</span>
+        <button id="close-toast" class="ml-4 text-white hover:text-gray-200">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/static/js/dashboard.js"></script>
+  </body>
+</html>
